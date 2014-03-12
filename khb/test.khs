@@ -1,0 +1,76 @@
+proc_integers:
+    < @fd[f].n > @fd[f].nmax ? _then1 : _else1 >
+_then1:
+    -1 >> @fd[f].qo
+    < _end1 >
+_else1:
+    @fd[f].n >> @fd[f].qo
+    fd[f].trtmp.n := @fd[f].n + 1
+    fd[f].trtmp.nmax := @fd[f].nmax
+    fd[f].trtmp.qo := @fd[f].qo
+    fd[f].n := @fd[f].trtmp.n
+    fd[f].nmax := @fd[f].trtmp.nmax
+    fd[f].qo := @fd[f].trtmp.qo
+    < proc_integers >
+    < _end1 >
+_end1:
+    fd[f] := ""
+    ~ (.qo, .nmax, .n)
+    < @fd[f].return >
+ 
+ proc_filter:
+    val << @(fd\@f\qi)
+    < @val != -1 ? _then2 : _else2 >
+_then2:
+    < @val % @(fd\@f\n) != 0 ? _then3 : _end3 >
+_then3:
+    @val >> @(fd\@f\qo)
+_end3:
+    <proc_filter>
+    <_end2>
+_else2:
+    -1 >> @qo
+    <_end2>
+_end2:
+    fd[f] := ""
+    ~ (.qo, .qi, .val, .n)
+    < @(fd\@f\return) >
+
+proc_primes:
+    .val << @.qi
+    < @.val != -1 ? _then4 : _end4 >
+_then4:
+    @.val >> @stdout
+    .c := <>
+    | _par_1 |
+    .qi := @(.c\in)
+    <proc_primes>
+_end4:
+    fd\@f := ""
+    ~ (.val, .qi, .c)
+    < @(fd\@f\return) >
+_par_1:
+    .n := @.val
+    .qo := @(.c\out)
+    <proc_filter>
+
+proc_main:
+    .c := <>
+    | _par_2 |
+    fd\(@f+1)\qi := @(.c\in)
+    f := @f+1
+    .return := _ret1
+    <proc_primes>
+_ret1:
+    f := @f-1
+    .tmp_retval := @(fd\(@f+1))
+    fd\@f := .tmp_retval
+    ~(.tmp_retval)
+    < .return >
+_par_2:
+    .n := 2
+    .nmax := 5000
+    .qo := @(.c\out)
+    <proc_integers>
+
+

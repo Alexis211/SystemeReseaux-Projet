@@ -1,0 +1,3 @@
+true: use_menhir
+<*.byte>: use_unix
+<*.native>: use_unix

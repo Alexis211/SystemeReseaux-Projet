@@ -1,0 +1,67 @@
+$$ integers (n, nmax, qo) =
+    (n > nmax ?
+        (-1) >> qo
+    :
+        n >> qo;
+        become integers(n+1, nmax, qo)
+    )
+
+# Version alternative :
+$$ integers (n, nmax, qo) =
+    ]->[ (
+        (n > nmax ? ->[]);
+        n >> qo;
+        n = n + 1
+    );
+    -1 >> qo
+
+$$ filter (n, qi, qo) =
+    val << qi;
+    (val != -1 ?
+        (val % n != 0 ?
+            val >> qo
+        );
+        become filter(n, qi, qo)
+    :
+        -1 >> qo
+    )
+
+# Version alternative :
+$$ filter (n, qi, qo) =
+    ]->[ (
+        val << qi;
+        (val == -1 ? ->[]);
+        (val % n != 0 ? val >> qo)
+    );
+    -1 >> qo
+
+$$ primes (qi) =
+    val << qi; 
+    (val != -1 ?
+        val >> stdout;
+        c = <>;
+        | become filter(val, qi, c.out) |;
+        become primes(c.in)
+    )
+
+# Version alternative :
+$$ primes (qi) =
+    ]->[ (
+        val << qi;
+        (val == -1 ? ->[]);
+        val >> stdout;
+        c = <>;
+        | filter(val, qi, c.out) |;
+        qi = c.in
+    )
+
+$$ main () =
+    c = <>;
+    | integers (2, 5000, c.out) |;
+    primes (c.in)
+
+
+    
+
+
+
