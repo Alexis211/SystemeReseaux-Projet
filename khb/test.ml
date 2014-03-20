@@ -98,4 +98,4 @@ let primes_khs = [|
 
 let () =
     Array.iter Ksh_print.print_stmt primes_khs;
-    Khs_exec_seq.exec_program (load_program primes_khs)
+    Khs_exec_local.exec_program (load_program primes_khs)

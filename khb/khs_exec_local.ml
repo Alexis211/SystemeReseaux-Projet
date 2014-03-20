@@ -12,30 +12,6 @@ let wait_childs () =
         List.iter (fun pid -> ignore (Unix.waitpid [] pid)) !childs)
         ()
 
-let max_chans = 12
-let ochans = Hashtbl.create 12
-let ochans_time = ref Smap.empty
-let get_chan id =
-    ochans_time := Smap.map (fun v -> v+1) !ochans_time;
-    ochans_time := Smap.add id 0 !ochans_time;
-    if Smap.cardinal !ochans_time > max_chans then begin
-        let maxchan, _ =
-            Smap.fold
-                (fun k v (mk, mv) -> if v > mv then (k, v) else (mk, mv))
-                !ochans_time ("", 0) in
-        let i_fd, o_fd = Hashtbl.find ochans maxchan in
-        Unix.close i_fd; Unix.close o_fd;
-        Hashtbl.remove ochans maxchan;
-        ochans_time := Smap.remove maxchan !ochans_time
-    end;
-    try
-        Hashtbl.find ochans id
-    with Not_found ->
-        let i, o = Unix.openfile ("/tmp/"^id) [Unix.O_RDONLY] 0,
-                   Unix.openfile ("/tmp/"^id) [Unix.O_WRONLY] 0 in
-        Hashtbl.add ochans id (i, o);
-        i, o
-
 let newchan proc =
     let id = "khs_ch_" ^ string_of_int (Random.int 1000000)
         ^ "-" ^ string_of_int (Random.int 1000000) in
@@ -50,17 +26,22 @@ let exec_proc proc =
         | PSExec | PSExecRecvd _ ->
             exec_stmt proc
         | PSSend(c, kv) ->
+            let c = str_of_kbval c in
             proc.xstatus <- PSExec;
             begin
                 if c == "stdout" then
                     Format.printf "%s@." (kval_descr kv)
                 else
-                    let _, c_out = get_chan c in
-                    Marshal.to_channel (Unix.out_channel_of_descr c_out) kv []
+                    let c_out = Unix.openfile ("/tmp/"^c) [Unix.O_WRONLY] 0 in
+                    Marshal.to_channel (Unix.out_channel_of_descr c_out) kv [];
+                    Unix.close c_out
             end
         | PSRecv c ->
-            let c_in, _ = get_chan c in
-            proc.xstatus <- PSExecRecvd (Marshal.from_channel (Unix.in_channel_of_descr c_in))
+            let c = str_of_kbval c in
+            let c_in = Unix.openfile ("/tmp/"^c) [Unix.O_RDONLY] 0 in
+            let data = Marshal.from_channel (Unix.in_channel_of_descr c_in) in
+            proc.xstatus <- PSExecRecvd data;
+            Unix.close c_in
     done
 
 let spawn proc pos =
