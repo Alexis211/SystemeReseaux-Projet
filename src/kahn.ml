@@ -150,3 +150,50 @@ module Seq: S = struct
 
 end
 
+
+module Pipe: S = struct
+    type 'a process = unit -> 'a
+
+    type 'a in_port = in_channel
+    type 'a out_port = out_channel
+
+    let children = ref []
+
+    let new_channel =
+        fun () ->
+            let i, o = Unix.pipe () in
+            Unix.in_channel_of_descr i, Unix.out_channel_of_descr o
+
+    let get c =
+        fun () -> Marshal.from_channel c
+
+    let put x c =
+        fun () -> Marshal.to_channel c x []
+
+
+    let return v =
+        fun () -> v
+
+    let bind e f =
+        fun () -> f (e ()) ()
+
+    let run p =
+        let v = p() in
+        List.iter
+            (fun x -> try ignore(Unix.waitpid [] x) with _ -> ())
+            !children;
+        v
+
+    let doco l =
+        fun () ->
+            List.iter (fun p ->
+                let i = Unix.fork () in
+                if i = 0 then begin
+                    children := [];
+                    run p;
+                    exit 0
+                end else begin
+                    children := i::!children
+                end)
+            l
+end

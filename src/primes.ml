@@ -32,11 +32,12 @@ module Primes (K : Kahn.S) = struct
 
   let main : unit process =
     (delay new_channel ()) >>=
-    (fun (q_in, q_out) -> doco [ integers 5000 q_out ; primes q_in ])
+    (fun (q_in, q_out) -> doco [ integers 2000 q_out ; primes q_in ])
 
 end
 
-module P = Primes(Kahn.Seq)
+module Eng = Kahn.Pipe
+module P = Primes(Eng)
 
 let () = P.K.run P.main
 
