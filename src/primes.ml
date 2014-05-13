@@ -23,20 +23,24 @@ module Primes (K : Kahn.S) = struct
     in loop()
 
   let rec primes (qi : int in_port) : unit process =
-    (get qi) >>= (fun v ->
-      if v <> -1 then begin
-        io_write ((string_of_int v)^"\n");
-        (delay new_channel ()) >>=
-        (fun (qi2, qo2) -> doco [ filter v qi qo2 ; primes qi2 ])
-      end else return ())
+    bind_io
+      (get qi) 
+      (fun v ->
+        if v <> -1 then
+          begin
+            Format.printf "%d@." v;
+            (delay new_channel ()) >>=
+            (fun (qi2, qo2) -> doco [ filter v qi qo2 ; primes qi2 ])
+          end 
+        else return ())
 
   let main : unit process =
     (delay new_channel ()) >>=
-    (fun (q_in, q_out) -> doco [ integers 2000 q_out ; primes q_in ])
+    (fun (q_in, q_out) -> doco [ integers 1000 q_out ; primes q_in ])
 
 end
 
-module Eng = Kahn.Seq
+module Eng = Kahn_pipe.Pipe
 module P = Primes(Eng)
 
 let () = P.K.run P.main
