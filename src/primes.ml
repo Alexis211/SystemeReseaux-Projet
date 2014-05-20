@@ -23,9 +23,7 @@ module Primes (K : Kahn.S) = struct
     in loop()
 
   let rec primes (qi : int in_port) : unit process =
-    bind_io
-      (get qi) 
-      (fun v ->
+      (get qi) >>= (fun v ->
         if v <> -1 then
           begin
             Format.printf "%d@." v;
@@ -36,7 +34,7 @@ module Primes (K : Kahn.S) = struct
 
   let main : unit process =
     (delay new_channel ()) >>=
-    (fun (q_in, q_out) -> doco [ integers 1000 q_out ; primes q_in ])
+    (fun (q_in, q_out) -> doco [ integers 2000 q_out ; primes q_in ])
 
 end
 

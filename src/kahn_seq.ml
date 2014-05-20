@@ -14,7 +14,7 @@ module Seq: S = struct
 	let push_cont (cont : ('a -> unit) option) (v : 'a) =
 		match cont with
 		| None -> ()
-		| Some cont -> Queue.push (fun () -> cont v) tasks
+		| Some cont_f -> Queue.push (fun () -> cont_f v) tasks
 
 	let new_channel () =
 		let q = Queue.create () in
@@ -23,9 +23,7 @@ module Seq: S = struct
 	let put x c =
 		fun cont ->
 			Queue.push x c;
-			match cont with
-			| None -> ()
-			| Some cont ->	Queue.push cont tasks
+			push_cont cont ()
 
 	let rec get c =
 		fun cont ->
@@ -62,12 +60,11 @@ module Seq: S = struct
 		fun cont ->
 			push_cont cont v
 
-	let bind e f =
+	let bind (e : 'a process) (f : 'a -> 'b process) : 'b process =
 		fun cont ->
-			Queue.push (fun () -> e (Some (fun r -> f r cont))) tasks
-	let bind_io e f =
-		fun cont ->
-			Queue.push (fun () -> e (Some (fun r -> f r cont))) tasks
+			e (Some (fun (r : 'a) -> f r cont))
+
+	let bind_io = bind
 		
 	let run e =
 		let ret = ref None in

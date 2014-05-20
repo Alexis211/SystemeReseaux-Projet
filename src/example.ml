@@ -86,6 +86,6 @@ module Example (K : Kahn.S) = struct
 
 end
 
-module E = Example(Kahn_pipe.Pipe)
+module E = Example(Kahn_seq.Seq)
 
 let () = E.K.run E.main2
