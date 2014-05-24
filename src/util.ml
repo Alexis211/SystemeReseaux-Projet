@@ -1,5 +1,7 @@
 open Unix
 
+let (@@) a b = a b
+
 type id = int * int
 let new_id () : id = (Random.int 100000, Random.int 100000)
 let id_str (a, b) = Format.sprintf "%d.%d" a b

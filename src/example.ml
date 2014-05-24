@@ -1,3 +1,5 @@
+open Util
+
 module Example (K : Kahn.S) = struct
   module K = K
   module Lib = Kahn.Lib(K)
