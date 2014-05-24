@@ -220,6 +220,9 @@ let rec server_run server =
 		end
 	end
 
+let server_shutdown server =
+	if !my_addr <> "" then shutdown server.sock SHUTDOWN_ALL
+
 (* Main function *)
 
 
@@ -299,6 +302,6 @@ let () =
 	end;
 
 	server_run server;
-	shutdown server.sock SHUTDOWN_ALL;
+	server_shutdown server;
 	List.iter (fun pid -> ignore (waitpid [] pid)) !pids
 	
