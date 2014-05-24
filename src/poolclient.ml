@@ -10,11 +10,14 @@ let fullfill_request task (addr, port) n =
 	for i = 0 to n-1 do
 		Format.eprintf "Spawn %s@." task;
 		if fork() = 0 then begin
-			let sock = socket PF_INET SOCK_STREAM 0 in
-			connect sock (make_addr addr port);
-			dup2 sock stdin;
-			dup2 sock stdout;
-			execv task [|task|]
+            try
+    			let sock = socket PF_INET SOCK_STREAM 0 in
+    			connect sock (make_addr addr port);
+    			dup2 sock stdin;
+    			dup2 sock stdout;
+    			execv task [|task|]
+            with
+            | _ -> exit 0
 		end
 	done
 

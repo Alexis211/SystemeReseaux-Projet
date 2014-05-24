@@ -76,7 +76,7 @@ module Example (K : Kahn.S) = struct
   let main2 : int K.process =
     (delay K.new_channel()) >>=
       (fun (qi, qo) ->
-        (fib_rec 50 7 qo) >>=
+        (fib_rec 53 7 qo) >>=
 		(fun () -> K.get qi))
 
 end

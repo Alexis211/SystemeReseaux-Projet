@@ -18,5 +18,8 @@ let read_one_msg fd =
 	assert (read fd hdr 0 Marshal.header_size = Marshal.header_size);
 	let dlen = Marshal.data_size hdr 0 in
 	let data = String.create dlen in
-	assert (read fd data 0 dlen = dlen);
+    let rl = ref 0 in
+    while !rl < dlen do
+       rl := !rl + read fd data !rl (dlen - !rl)
+    done;
 	Marshal.from_string (hdr ^ data) 0
