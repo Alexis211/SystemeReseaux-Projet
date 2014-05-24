@@ -45,6 +45,8 @@ module ProtoKahn: S = struct
 					)	
 				)
 	
+	let output s = send (Output s)
+	
 	let select pl = fun cont -> assert false
 	let select_default = fun cont -> assert false
 
@@ -74,14 +76,6 @@ module ProtoKahn: S = struct
 			a (Some (fun va -> 
 				let b = (f va) in
 				b cont))
-	let bind_io a f = 
-		fun cont ->
-			a (Some (fun va ->
-			send_task
-				(fun () ->
-					let b = f va in
-					send_task (fun () -> b cont) false)
-				true))
 
 	let origin = ref false
 	let dbg_out = ref false

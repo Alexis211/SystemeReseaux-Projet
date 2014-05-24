@@ -28,11 +28,10 @@ module Example (K : Kahn.S) = struct
 
   let output (qi : (int * int) K.in_port) : unit K.process =
     let rec loop () =
-      K.bind_io 
-        (K.get qi)
+        (K.get qi) >>=
         (fun (v, s) ->
           if v <> -1 then
-            begin Format.eprintf "f(%d) = %d@." v s; loop () end
+            begin K.output @@ Format.sprintf "f(%d) = %d@." v s; loop () end
           else K.return ())
     in
     loop ()
@@ -64,10 +63,9 @@ module Example (K : Kahn.S) = struct
                 fib_rec (n-2) (r-1) q_out ;
                 fib_rec (n-1) (r-1) q_out2 ;
                 K.get q_in >>= (fun x ->
-                  K.bind_io
-                    (K.get q_in2)
+                   	(K.get q_in2) >>=
                     (fun y ->
-                      Format.eprintf "f(%d) = %d@." n (x+y);
+                      K.output @@ Format.sprintf "f(%d) = %d@." n (x+y);
                       K.put (x+y) qo))
               ]
             )))
@@ -76,7 +74,7 @@ module Example (K : Kahn.S) = struct
   let main2 : int K.process =
     (delay K.new_channel()) >>=
       (fun (qi, qo) ->
-        (fib_rec 47 7 qo) >>=
+        (fib_rec 50 7 qo) >>=
 		(fun () -> K.get qi))
 
 end

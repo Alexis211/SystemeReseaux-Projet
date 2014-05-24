@@ -18,6 +18,8 @@ module Pipe: S = struct
         fun () ->
           Marshal.to_channel c x [];
           flush c
+	
+	let output s = Format.printf "%s@?" s
     
     let try_get block prt_list =
         let fds = List.map fst prt_list in
@@ -52,7 +54,6 @@ module Pipe: S = struct
 
     let bind e f =
         fun () -> f (e ()) ()
-    let bind_io = bind
 
     let run p =
         p()

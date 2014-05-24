@@ -11,6 +11,7 @@ exception ProtocolError of string
 
 type message =
 	| Hello
+	| Output of string
 	| Get of id * msg_task_descr
 	| Put of id * string
 	| RequestTask
@@ -18,4 +19,11 @@ type message =
 	| GiveMsgTask of string * msg_task_descr
 	| FinalResult of string
 	
+
+(* Protocol for pooling *)
+
+type pool_message =
+	| PoolHello
+	| PoolProvide of int
+	| PoolRequest of string * (string * int) * int
 

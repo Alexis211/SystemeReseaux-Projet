@@ -26,7 +26,7 @@ module Primes (K : Kahn.S) = struct
       (get qi) >>= (fun v ->
         if v <> -1 then
           begin
-            Format.eprintf "%d@." v;
+            K.output @@ Format.sprintf "%d@." v;
             (delay new_channel ()) >>=
             (fun (qi2, qo2) -> doco [ filter v qi qo2 ; primes qi2 ])
           end 

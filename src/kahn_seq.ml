@@ -19,6 +19,8 @@ module Seq: S = struct
 	let new_channel () =
 		let q = Queue.create () in
 		q, q
+	
+	let output s = Format.printf "%s@?" s
 
 	let put x c =
 		fun cont ->
@@ -64,8 +66,6 @@ module Seq: S = struct
 		fun cont ->
 			e (Some (fun (r : 'a) -> f r cont))
 
-	let bind_io = bind
-		
 	let run e =
 		let ret = ref None in
 		e (Some (fun v -> ret := Some v));

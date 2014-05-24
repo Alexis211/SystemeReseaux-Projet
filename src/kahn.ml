@@ -7,6 +7,8 @@ module type S = sig
 	val put: 'a -> 'a out_port -> unit process
 	val get: 'a in_port -> 'a process
 
+	val output: string -> unit
+
 	val select: ('a in_port * ('a -> 'b)) list -> 'b process
 	val select_default: ('a in_port * ('a -> 'b)) list -> (unit -> 'b) -> 'b process
 
@@ -14,7 +16,6 @@ module type S = sig
 
 	val return: 'a -> 'a process
 	val bind: 'a process -> ('a -> 'b process) -> 'b process
-	val bind_io: 'a process -> ('a -> 'b process) -> 'b process
 
 	val run: 'a process -> 'a
 end
