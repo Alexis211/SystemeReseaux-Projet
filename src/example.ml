@@ -32,7 +32,7 @@ module Example (K : Kahn.S) = struct
         (K.get qi)
         (fun (v, s) ->
           if v <> -1 then
-            begin Format.printf "f(%d) = %d@." v s; loop () end
+            begin Format.eprintf "f(%d) = %d@." v s; loop () end
           else K.return ())
     in
     loop ()
@@ -67,25 +67,22 @@ module Example (K : Kahn.S) = struct
                   K.bind_io
                     (K.get q_in2)
                     (fun y ->
-                      Format.printf "f(%d) = %d@." n (x+y);
+                      Format.eprintf "f(%d) = %d@." n (x+y);
                       K.put (x+y) qo))
               ]
             )))
 
 
-  let main2 : unit K.process =
+  let main2 : int K.process =
     (delay K.new_channel()) >>=
       (fun (qi, qo) ->
-        K.doco
-          [
-            fib_rec 53 7 qo;
-            K.bind_io
-              (K.get qi)
-              (fun v -> Format.printf "Got it! Result is %d@." v; K.return ())
-          ])
+        (fib_rec 47 7 qo) >>=
+		(fun () -> K.get qi))
 
 end
 
-module E = Example(Kahn_seq.Seq)
+module E = Example(Kahn_stdio.ProtoKahn)
 
-let () = E.K.run E.main2
+let () =
+	let r = E.K.run E.main2 in
+	Format.eprintf "Final result: %d@." r

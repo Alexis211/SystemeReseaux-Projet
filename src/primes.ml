@@ -26,20 +26,25 @@ module Primes (K : Kahn.S) = struct
       (get qi) >>= (fun v ->
         if v <> -1 then
           begin
-            Format.printf "%d@." v;
+            Format.eprintf "%d@." v;
             (delay new_channel ()) >>=
             (fun (qi2, qo2) -> doco [ filter v qi qo2 ; primes qi2 ])
           end 
         else return ())
 
-  let main : unit process =
+  let main : int process =
     (delay new_channel ()) >>=
-    (fun (q_in, q_out) -> doco [ integers 2000 q_out ; primes q_in ])
+    (fun (q_in, q_out) -> doco [ integers 500 q_out ; primes q_in ])
+	>>= (fun () -> return 42)
 
 end
 
-module Eng = Kahn_pipe.Pipe
+module Eng = Kahn_stdio.ProtoKahn
 module P = Primes(Eng)
 
-let () = P.K.run P.main
+let () =
+	let r = P.K.run P.main in
+	assert (r = 42);
+	Format.eprintf "Primes finished (%d \\o/).@." r
+
 

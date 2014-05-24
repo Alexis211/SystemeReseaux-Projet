@@ -1,19 +1,13 @@
 OCAMLBUILD=ocamlbuild -classic-display \
 		-tags annot,debug,thread \
 		-libs unix
-TARGET=native
 
-primes:
-	$(OCAMLBUILD) primes.$(TARGET)
+all: primes.native example.native manager.native
 
-example:
-	$(OCAMLBUILD) example.$(TARGET)
+%.native: %.ml kahn_pipe.ml kahn_seq.ml kahn_stdio.ml proto.ml util.ml
+	$(OCAMLBUILD) $@
 
 
 clean:
 	$(OCAMLBUILD) -clean
 
-realclean: clean
-	rm -f *~
-
-cleanall: realclean
