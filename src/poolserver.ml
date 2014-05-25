@@ -29,7 +29,9 @@ let new_server () =
 
 	let stop_srv _ =
 		Format.eprintf "Shutting down server...@.";
+		Hashtbl.iter (fun _ c -> c.disconnect()) server.clients;
 		shutdown server.sock SHUTDOWN_ALL;
+		close server.sock;
 		exit 0
 	in
 	Sys.set_signal Sys.sigint (Sys.Signal_handle stop_srv);

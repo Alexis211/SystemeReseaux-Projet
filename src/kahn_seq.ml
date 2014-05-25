@@ -53,8 +53,14 @@ module Seq: S = struct
 
 	let doco l =
 		fun cont ->
-			List.iter (fun proc -> Queue.push (fun () -> proc (fun () -> ())) tasks) l;
-			cont ()
+			let remain = ref (List.length l) in
+			List.iter (fun proc -> Queue.push (fun () -> proc (fun () -> remain := !remain - 1)) tasks) l;
+			let rec wait_x () =
+				if !remain = 0 then
+					cont ()
+				else
+					Queue.push wait_x tasks
+			in wait_x ()
 
 	let return v =
 		fun cont -> cont v

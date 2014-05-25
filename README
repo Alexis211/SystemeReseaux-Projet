@@ -1,0 +1,109 @@
+Projet de Système et Réseaux 2014
+Alex AUVOLAT, Jean FABRE-MONPLAISIR
+
+------------------------------------
+
+Description du projet
+=====================
+
+Implémentation des réseaux de Kahn en OCaml pour permettre la programmation
+parallèle. Trois implémentations à réaliser :
+
+- Implémentation séquentielle (parallélisme coopératif mono-threadé)
+- Implémentation basée sur les primitives Unix (fork, pipe)
+- Implémentation permettant la communication en réseau
+
+
+Commentaires techniques
+=======================
+
+Dans les versions séquentielle et Unix, nous avons implémenté une nouvelle
+primitive : select, qui permet de faire un get sur plusieurs caneaux en même
+temps et d'exécuter une fonction différente en fonction du premier canal sur
+lequel un message arrive. Nous n'avons pas pris le temps d'implémenter cette
+fonction dans la version fonctionnant par le réseau.
+
+Version séquentielle
+--------------------
+
+Un processus est décrit par le type suivant :
+
+	type 'a process = ('a -> unit) -> unit
+
+C'est-à-dire qu'un processus renvoyant une valeur de type 'a est une fonction qui
+prend comme argument sa continuation et s'exécute à ce moment-là.
+
+Les fonctions qui exploitent le parallélisme font appel à une file de processus
+en attente d'exécution : doco lance des processus en “parallèle” en mettant
+les-dits processus dans la file ; get gère l'attente d'un message sur un canal
+en mettant en fin de file un processus qui re-tente le get lorsque celui-ci a
+échoué car le canal ne contenait aucune donnée - l'éspoir étant qu'un autre
+processus se sera exécuté d'ici-là et aura envoyé un message dans le canal.
+
+Version Unix
+------------
+
+Toutes les primitives sont fournies d'office par Unix, il n'y a donc presque
+rien à faire. Les put/get sont automatiquement gérés par le noyau en ce qui
+concerne la bufferisation et la mise en attente d'un processus tant qu'il n'y a
+rien à lire ou qu'il n'y a plus de place pour écrire. Le lancement de processus
+en parallèle (doco) exploite simplement l'appel système fork, puis waitpid pour
+la syncronisation finale.
+
+Version réseau
+--------------
+
+Publicité pour la version réseau : nous avons réussi, en mobilisant 5 machines
+des salles INFO3 et INFO4 de l'ENS, à calcuer de manière naïve (c'est-à-dire
+avec un algorithme exponentiel) le 53e nombre de la suite de Fibonacci, en un
+temps record de 16,8 secondes. Ce nombre pouvait être calculé sur une seule
+machine, ce qui prenait un peu plus d'une minute dans le cas d'une machine dont
+les quatre cœurs étaient exploités (implémentation Unix). En mobilisant plus de
+machines, nous pourrions sûrement améliorer encore ce temps.
+
+L'implémentation réseau est basée sur une version simplifiée de l'implémentation
+séquentielle, où un processus participant de l'exécution du réseau se contente
+de lire des tâches sur stdin, de les exécuter et d'envoyer des informations sur
+stdout (messages envoyés, tâches lancées par doco).
+
+À cela se rajoute un “manager”, ou gestionnaire, qui s'occupe de multiplexer les
+entrées/sorties pour dispatcher les processus disponibles aux différents
+processus qui lui sont affectés.
+
+Les appels système pour la communication étant les même pour le réseau et les
+pipes (read/write), le manager peut aussi bien communiquer avec des processus
+locaux qu'avec des processus distants via le réseau.
+
+À cela nous avons rajouté un système de “pool” (pool server/pool client) qui
+permet à un certain nombre de machines de se déclarer “disponnibles” pour des
+calculs. Le manager peut ensuite demander à la pool de lui donner un certain
+nombre de processus pour effectuer des calculs. Le pool client s'occupe
+d'initaliser la connection réseau et de rediriger stdin et stdout vers le
+réseau, avant de lancer le processus qui effectuera les calculs.
+
+Les tâches (processus au sens de Kahn) sont des fermetures que l'on serialise
+via la bibliothèque Marshall d'OCaml pour être transmis par le réseau. La partie
+manager est indépendante de l'application que l'on fait tourner, par contre le
+binaire qui effectue les calculs doit être identique sur toutes les machines
+participant au calcul pour que des fermetures puissent être transmises via
+Marshall sans problème.
+
+Utilisation de la version réseau :
+
+	tulipier$ ./poolserver.native &
+	tonka$ ./poolclient.native tulipier
+	tamier$ ./poolclient.native tulipier
+	turnep$ ./poolclient.native tulipier
+	tetragone$ ./poolclient.native tulipier
+	tulipier$ time ./manager.native -pool-addr tulipier \
+		-my-addr tulipier -pool-proc 16 -local-proc 4 ./example.native
+
+(en supposant que . correspond au même dossier, monté par NFS par exemple, sur
+toutes les machines)
+
+Les temps d'exécution peuvent varier car ils sont fonction de la répartition
+entre les machines des tâches qui calculent peu et communiquent beaucoup :
+celles-ci ralentissent le système lorsqu'elles sont lancées sur une machine qui
+n'est pas celle où tourne le manager. Nous ne pouvons avoir que peu d'influence
+là-dessus puisque la répartition des processus est un processus aléatoire.
+
