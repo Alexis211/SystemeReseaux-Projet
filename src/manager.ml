@@ -265,7 +265,7 @@ let () =
 			dup2 m2p_p stdin;
 			dup2 p2m_p stdout;
 			let args = Array.of_list
-				([!program] @
+                ([!program; "-col"; string_of_int (i+1)] @
 					(if i = 0 then ["-org"] else []) @
 					(if !dbg_out then ["-dbg"] else [])) in
 			execv !program args

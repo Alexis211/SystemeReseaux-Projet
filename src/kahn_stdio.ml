@@ -79,6 +79,7 @@ module ProtoKahn: S = struct
 
 	let origin = ref false
 	let dbg_out = ref false
+    let color = ref 0
 	let dbg x = if !dbg_out then Format.eprintf "(cli) %s@." x
 
 	let parse_args () =
@@ -86,12 +87,21 @@ module ProtoKahn: S = struct
 		let options = [
 			"-org", Arg.Set origin, "Launch root process";
 			"-dbg", Arg.Set dbg_out, "Show debug output";
+            "-col", Arg.Set_int color, "Color for output";
 		] in
 		Arg.parse options (fun _ -> assert false) usage
 
 	let run proc =
-		Random.self_init();
 		parse_args();
+
+		Random.self_init();
+        let color =
+                if !color = 0
+                   then Random.int 6 + 31
+                   else 30 + !color in
+        let cseq = Format.sprintf "\x1B[%dm" color in
+        let ncseq = "\x1B[0m" in
+
 		(* Initialize protocol *)
 		send Hello;
 		if read () <> Hello then raise (ProtocolError "Server did not say Hello correctly.");
@@ -107,15 +117,15 @@ module ProtoKahn: S = struct
 			| GiveTask(td, _) ->
 				dbg "Got task!";
 				let t : task = Marshal.from_string td 0 in
-				Format.eprintf "[@?";
+				Format.eprintf "%s[%s@?" cseq ncseq;
 				t();
-				Format.eprintf "]@?";
+				Format.eprintf "%s]%s@?" cseq ncseq;
 			| GiveMsgTask(msg, td) ->
 				dbg "Got msg task!";
 				let t : msg_task = Marshal.from_string td 0 in
-				Format.eprintf "{@?";
+				Format.eprintf "%s{%s@?" cseq ncseq;
 				t msg;
-				Format.eprintf "}@?";
+				Format.eprintf "%s}%s@?" cseq ncseq;
 			| FinalResult(x) ->
 				dbg "Got result!";
 				result := Some (Marshal.from_string x 0)

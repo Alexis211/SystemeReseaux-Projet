@@ -15,7 +15,7 @@ let fullfill_request task (addr, port) n =
     			connect sock (make_addr addr port);
     			dup2 sock stdin;
     			dup2 sock stdout;
-    			execv task [|task|]
+                execv task [|task; "-col";string_of_int (i+1)|]
             with
             | _ -> exit 0
 		end
