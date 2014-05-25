@@ -107,11 +107,15 @@ module ProtoKahn: S = struct
 			| GiveTask(td, _) ->
 				dbg "Got task!";
 				let t : task = Marshal.from_string td 0 in
+				Format.eprintf "[@?";
 				t();
+				Format.eprintf "]@?";
 			| GiveMsgTask(msg, td) ->
 				dbg "Got msg task!";
 				let t : msg_task = Marshal.from_string td 0 in
+				Format.eprintf "{@?";
 				t msg;
+				Format.eprintf "}@?";
 			| FinalResult(x) ->
 				dbg "Got result!";
 				result := Some (Marshal.from_string x 0)
