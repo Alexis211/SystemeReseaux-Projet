@@ -1,13 +1,15 @@
-OCAMLBUILD=ocamlbuild -classic-display \
-		-tags annot,debug,thread \
-		-libs unix
+CAML=example.ml primes.ml \
+	 	manager.ml poolserver.ml poolclient.ml \
+		kahn_pipe.ml kahn_seq.ml kahn_stdio.ml \
+		proto.ml util.ml
 
-all: primes.native example.native manager.native poolserver.native poolclient.native
+BIN=example.native primes.native \
+		manager.native poolserver.native poolclient.native
 
-%.native: %.ml kahn_pipe.ml kahn_seq.ml kahn_stdio.ml proto.ml util.ml
-	$(OCAMLBUILD) $@
+all: $(CAML)
+	ocamlbuild $(BIN)
 
 
 clean:
-	$(OCAMLBUILD) -clean
+	ocamlbuild -clean
 

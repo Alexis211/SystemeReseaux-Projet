@@ -2,9 +2,12 @@ open Unix
 
 let (@@) a b = a b
 
-type id = int * int
-let new_id () : id = (Random.int 10000000, Random.int 10000000)
-let id_str (a, b) = Format.sprintf "%d.%d" a b
+type id = int * int * int
+let new_id () : id =
+        (   Random.int 10000000,
+            Random.int 10000000,
+            Random.int 10000000      )
+let id_str (a, b, c) = Format.sprintf "%d.%d.%d" a b c
 
 (* make_addr : string -> int -> sockaddr *)
 let make_addr host port =

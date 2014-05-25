@@ -36,7 +36,7 @@ module Primes (K : Kahn.S) = struct
 
   let main : int process =
     (delay new_channel ()) >>=
-    (fun (q_in, q_out) -> doco [ integers 500 q_out ; primes q_in ])
+    (fun (q_in, q_out) -> doco [ integers 2000 q_out ; primes q_in ])
 	>>= (fun () -> return 42)
 
 end
