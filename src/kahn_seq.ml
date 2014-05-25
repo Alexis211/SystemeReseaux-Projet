@@ -1,7 +1,7 @@
 open Kahn
 
 module Seq: S = struct
-	type 'a process = (('a -> unit) option) -> unit
+	type 'a process = ('a -> unit) -> unit
 
 	type 'a channel = 'a Queue.t
 	type 'a in_port = 'a channel
@@ -11,10 +11,8 @@ module Seq: S = struct
 
 	let tasks = Queue.create ()
 
-	let push_cont (cont : ('a -> unit) option) (v : 'a) =
-		match cont with
-		| None -> ()
-		| Some cont_f -> Queue.push (fun () -> cont_f v) tasks
+	let push_cont (cont : 'a -> unit) (v : 'a) =
+		Queue.push (fun () -> cont v) tasks
 
 	let new_channel () =
 		let q = Queue.create () in
@@ -55,20 +53,19 @@ module Seq: S = struct
 
 	let doco l =
 		fun cont ->
-			List.iter (fun proc -> Queue.push (fun () -> proc None) tasks) l;
-			push_cont cont ()
+			List.iter (fun proc -> Queue.push (fun () -> proc (fun () -> ())) tasks) l;
+			cont ()
 
 	let return v =
-		fun cont ->
-			push_cont cont v
+		fun cont -> cont v
 
 	let bind (e : 'a process) (f : 'a -> 'b process) : 'b process =
 		fun cont ->
-			e (Some (fun (r : 'a) -> f r cont))
+			e (fun (r : 'a) -> f r cont)
 
 	let run e =
 		let ret = ref None in
-		e (Some (fun v -> ret := Some v));
+		e (fun v -> ret := Some v);
 		while not (Queue.is_empty tasks) do
 			let task = Queue.pop tasks in
 			task ()

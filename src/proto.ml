@@ -4,6 +4,7 @@ open Util
 
 type task = unit -> unit
 type msg_task = string -> unit
+
 type task_descr = string
 type msg_task_descr = string
 
@@ -15,7 +16,7 @@ type message =
 	| Get of id * msg_task_descr
 	| Put of id * string
 	| RequestTask
-	| GiveTask of task_descr * bool
+	| GiveTask of task_descr 
 	| GiveMsgTask of string * msg_task_descr
 	| FinalResult of string
 	

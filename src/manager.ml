@@ -21,7 +21,7 @@ let pool_count = ref 0
 (* Server data structures *)
 
 type task_el =
-	| Task of task_descr * bool
+	| Task of task_descr
 	| MsgTask of string * msg_task_descr
 
 type client_status =
@@ -82,7 +82,7 @@ let push_task server task =
 		c.send
 			(match task with
 			| MsgTask(a, b) -> GiveMsgTask(a, b)
-			| Task(a, b) -> GiveTask(a, b))
+			| Task(a) -> GiveTask(a))
 
 let get_task server =
 	Queue.pop server.tasks
@@ -172,7 +172,7 @@ let rec server_run server =
 						cli.status <- Waiting
 					else cli.send (match Queue.pop server.tasks with
 									| MsgTask(a, b) -> GiveMsgTask(a, b)
-									| Task(a, b) -> GiveTask(a,b))
+									| Task(a) -> GiveTask(a))
 				| Some r ->
 					cli.send(FinalResult r);
 					client_disconnect server cli
@@ -197,9 +197,9 @@ let rec server_run server =
 						c.send(FinalResult x);
 						client_disconnect server c)
 					!p
-			| GiveTask(a, b) ->
+			| GiveTask(a) ->
 				dbg "got Task";
-				push_task server (Task(a, b))
+				push_task server (Task(a))
 			| GiveMsgTask(a, b) ->
 				dbg "got MsgTask";
 				push_task server (MsgTask(a, b))

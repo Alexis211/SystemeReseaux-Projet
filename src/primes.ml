@@ -41,7 +41,7 @@ module Primes (K : Kahn.S) = struct
 
 end
 
-module Eng = Kahn_stdio.ProtoKahn
+module Eng = Kahn_seq.Seq
 module P = Primes(Eng)
 
 let () =

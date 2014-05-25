@@ -7,7 +7,7 @@ open Proto
 
 module ProtoKahn: S = struct
 
-	type 'a process = (('a -> unit) option) -> unit
+	type 'a process = ('a -> unit) -> unit
 
 	type 'a channel = id
 	type 'a in_port = 'a channel
@@ -18,37 +18,25 @@ module ProtoKahn: S = struct
 
 	let task_desc t = Marshal.to_string t [Marshal.Closures]
 
-	let send_task t is_io =
-		send (GiveTask(task_desc t, is_io))
+	let send_task t =
+		send (GiveTask(task_desc t))
 
 	let new_channel () =
 		let x = new_id() in x, x
 	
-	let push_cont cont arg is_io =
-		match cont with
-		| None -> ()
-		| Some cont ->
-			send_task (fun () -> cont arg) is_io
-	
 	let put v prt =
 		fun cont ->
 			send (Put(prt, Marshal.to_string v []));
-			push_cont cont () false
+			cont ()
 	
 	let get prt =
 		fun cont ->
-			send (Get(prt, 
-					task_desc
-						(fun s -> match cont with
-							| None -> ()
-							| Some cont -> cont (Marshal.from_string s 0))
-					)	
-				)
+			send (Get(prt, task_desc (fun s -> cont (Marshal.from_string s 0))))
 	
 	let output s = send (Output s)
 	
-	let select pl = fun cont -> assert false
-	let select_default = fun cont -> assert false
+	let select pl = assert false (* Not Implemented *)
+	let select_default pl = assert false (* Not Implemented *)
 
 	let doco plist =
 		fun cont ->
@@ -56,26 +44,20 @@ module ProtoKahn: S = struct
 			List.iter
 				(fun p ->
 					send_task
-						(fun () -> p
-							(Some (fun () -> send (Put(f_ch_id, ""))))
-						)
-						false
-				) plist;
+						(fun () -> p (fun () -> send (Put(f_ch_id, "")))))
+				plist;
 			let rec push_x = function
-			| 0 -> push_cont cont () false
+			| 0 -> cont ()
 			| n -> send (Get(f_ch_id, task_desc (fun s -> push_x (n-1))))
 			in push_x (List.length plist)
 	
 	let return v =
-		fun cont ->
-			match cont with
-			| None -> ()
-			| Some cont -> cont v
+		fun cont -> cont v
 	let bind a f =
 		fun cont ->
-			a (Some (fun va -> 
-				let b = (f va) in
-				b cont))
+			a (fun va -> f va cont)
+
+	(* Main function *)
 
 	let origin = ref false
 	let dbg_out = ref false
@@ -106,7 +88,7 @@ module ProtoKahn: S = struct
 		send Hello;
 		if read () <> Hello then raise (ProtocolError "Server did not say Hello correctly.");
 		(* Start task if necessary *)
-		if !origin then proc (Some (fun r -> send (FinalResult (Marshal.to_string r []))));
+		if !origin then proc (fun r -> send (FinalResult (Marshal.to_string r [])));
 		(* While there are things to do... *)
 		let result = ref None in
 		while !result = None do
@@ -114,7 +96,7 @@ module ProtoKahn: S = struct
 			send RequestTask;
 			dbg "Reading...";
 			match read() with
-			| GiveTask(td, _) ->
+			| GiveTask(td) ->
 				dbg "Got task!";
 				let t : task = Marshal.from_string td 0 in
 				Format.eprintf "%s[%s@?" cseq ncseq;
